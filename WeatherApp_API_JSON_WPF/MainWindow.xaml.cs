@@ -13,11 +13,19 @@ namespace WeatherApp
         public MainWindow()
         {
             InitializeComponent();
+            System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;
         }
 
         private async void GetWeather_Click(object sender, RoutedEventArgs e)
         {
-            string city = CityTextBox.Text;
+            string city = CityTextBox.Text.Trim();
+
+            if (string.IsNullOrWhiteSpace(city))
+            {
+                MessageBox.Show("Podaj nazwę miasta.", "Błąd", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             string url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API_KEY}&units=metric&lang=pl";
 
             using (HttpClient client = new HttpClient())
@@ -40,9 +48,17 @@ namespace WeatherApp
 
                     WeatherIcon.Source = new BitmapImage(new Uri($"http://openweathermap.org/img/wn/{iconCode}@2x.png"));
                 }
+                catch (HttpRequestException)
+                {
+                    MessageBox.Show("Problem z połączeniem internetowym lub API.", "Błąd połączenia", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+                catch (Newtonsoft.Json.JsonReaderException)
+                {
+                    MessageBox.Show("Niepoprawna odpowiedź serwera.", "Błąd danych", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Błąd: " + ex.Message);
+                    MessageBox.Show($"Nieoczekiwany błąd: {ex.Message}", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
